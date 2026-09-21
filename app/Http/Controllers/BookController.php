@@ -18,7 +18,10 @@ class BookController extends Controller
 
     public function store(StoreBookRequest $request)
     {
-        $book = Book::create($request->validated());
+        $validated = $request->validated();
+        $validated['available_copies'] = $validated['total_copies'];
+
+        $book = Book::create($validated);
         return BookResource::make($book)->response()->setStatusCode(201);
     }
 
