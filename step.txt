@@ -1,0 +1,44 @@
+1
+1. Migration
+`php artisan make:migration create_books_table`. 
+Ini definisi struktur tabel (kolom, tipe data, 
+foreign key). Semua file lain bergantung ke struktur ini,
+jadi harus paling duluan. Jalankan `php artisan migrate` 
+buat langsung apply ke database—jangan cuma nulis 
+migration-nya tanpa dijalankan.
+2
+2. Model
+`php artisan make:model Book`. Definisikan 
+$fillable, relasi (misal `public function loans() 
+{ return $this->hasMany(Loan::class); }`), 
+dan casts kalau perlu. Model butuh tabel-nya sudah 
+ada (dari step 1) supaya nanti bisa langsung dicoba 
+query via `php artisan tinker`.
+3
+3. Factory
+`php artisan make:factory BookFactory --model=Book`. 
+Butuh Model sudah ada dulu buat tau field apa aja yang 
+perlu di-generate. Ini penting duluan karena Feature test 
+(step terakhir) bakal butuh factory buat bikin data dummy.
+
+4
+4. Routes
+Tambahkan 
+`Route::apiResource('books', BookController::class)` 
+di routes/api.php. Bisa ditulis sebelum Controller-nya 
+jadi (Laravel nggak protes route nunjuk ke class yang 
+belum lengkap method-nya), tapi enaknya ditulis di sini 
+biar kamu langsung tau endpoint apa aja yang mau dibikin 
+sebelum masuk ke detail request/controller.
+5
+5. Form Request
+`php artisan make:request StoreBookRequest` dan `UpdateBookRequest`. Tulis rules validasi di sini duluan sebelum Controller, supaya Controller-nya tinggal manggil `$request->validated()` tanpa mikirin validasi lagi di dalamnya.
+6
+6. Controller
+`php artisan make:controller BookController --api`. Di titik ini semua building block (Model, Factory buat testing nanti, Route, Request) udah ada, jadi Controller tinggal 'menyambungkan' semuanya: terima Request tervalidasi, panggil Model/Eloquent, return response.
+7
+7. API Resource
+`php artisan make:resource BookResource`. Tulis setelah Controller supaya kamu tau persis field apa yang mau di-expose ke response (whitelist), bukan nge-return $book mentah-mentah.
+8
+8. Feature Test
+`php artisan make:test BookApiTest --pest`. Pakai BookFactory (step 3) buat generate data, tembak endpoint dari Routes (step 4), assert response sesuai Resource (step 7). Ini validasi akhir bahwa semua potongan di atas nyambung beneran—sama seperti gaya kamu yang mau bukti eksekusi, bukan cuma percaya kode kelihatan benar.
