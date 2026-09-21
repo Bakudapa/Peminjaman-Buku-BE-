@@ -2,23 +2,22 @@
 
 namespace Database\Factories;
 
-use App\Models\Loan;
+use App\Models\Book;
+use App\Models\User;
+use App\Enums\LoanStatus;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends Factory<Loan>
- */
 class LoanFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [
-            //
+            'book_id'     => Book::factory(),
+            'member_id'   => User::factory(),
+            'borrowed_at' => now(),
+            'due_at'      => now()->addDays(7),
+            'returned_at' => null,
+            'status'      => LoanStatus::Active,
         ];
     }
 }

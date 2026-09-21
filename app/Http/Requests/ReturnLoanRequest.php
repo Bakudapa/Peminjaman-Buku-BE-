@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class ShowLoanRequest extends FormRequest
+class ReturnLoanRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -13,7 +13,7 @@ class ShowLoanRequest extends FormRequest
     public function authorize(): bool
     {
         $loan = $this->route('loan');
-        return $this->user()->id === $loan->member_id || $this->user()->isAdmin();
+        return $this->user()->id === $loan->member_id;
     }
 
     /**
