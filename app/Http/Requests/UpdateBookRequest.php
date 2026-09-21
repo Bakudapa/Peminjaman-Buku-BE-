@@ -22,12 +22,25 @@ class UpdateBookRequest extends FormRequest
      */
     public function rules(): array
     {
+        $book = $this->route('book');
+
         return [
-            'title'=>'sometimes|string',
-            'author'=>'sometimes|string',
-            'category'=>'sometimes|string',
-            'description'=>'sometimes|string',
-            'total_copies'=>'sometimes|integer|min:1',
+            'title'         => 'sometimes|string',
+            'author'        => 'sometimes|string',
+            'category'      => 'sometimes|string',
+            'description'   => 'sometimes|string',
+            'total_copies'  => [
+                'sometimes',
+                'integer',
+                'min:1',
+                function ($attribute, $value, $fail) use ($book) {
+                    $activeLoans = $book->loans()->where('status', 'active')->count();
+
+                    if ($value < $activeLoans) {
+                        $fail("Total copies tidak boleh kurang dari {$activeLoans} (jumlah buku yang sedang dipinjam).");
+                    }
+                },
+            ],
         ];
     }
 }

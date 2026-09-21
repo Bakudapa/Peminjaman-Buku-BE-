@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Enums\LoanStatus;
+use Illuminate\Database\Eloquent\Builder;
 
 
 class Loan extends Model
@@ -25,5 +28,29 @@ class Loan extends Model
     public function member(): BelongsTo
     {
         return $this->belongsTo(User::class, 'member_id');
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'borrowed_at' => 'immutable_datetime',
+            'due_at'      => 'immutable_datetime',
+            'returned_at' => 'immutable_datetime',
+            'status'      => LoanStatus::class,
+        ];
+    }
+
+    public function isOverdue(): bool
+    {
+        return $this->status === \App\Enums\LoanStatus::Active
+            && $this->due_at?->isPast();
+    }
+
+
+    public function scopeOverdue(Builder $query): Builder
+    {
+        return $query
+            ->where('status', LoanStatus::Active->value)
+            ->where('due_at', '<', now());
     }
 }

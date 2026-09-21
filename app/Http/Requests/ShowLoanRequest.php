@@ -12,8 +12,8 @@ class ShowLoanRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        $targetMemberId = $this->input('member_id', $this->user()?->id);
-        return $this->user()->id === (int) $targetMemberId || $this->user()->isAdmin();
+        $loan = $this->route('loan');
+        return $this->user()->id === $loan->member_id || $this->user()->isAdmin();
     }
 
     /**

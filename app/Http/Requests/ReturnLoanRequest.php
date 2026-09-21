@@ -5,14 +5,15 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class IndexLoanRequest extends FormRequest
+class ReturnLoanRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return $this->user()?->isAdmin() ?? false;
+        $loan = $this->route('loan');
+        return $this->user()->id === $loan->member_id;
     }
 
     /**
@@ -23,7 +24,7 @@ class IndexLoanRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'overdue' => ['sometimes', 'in:true,false,1,0'],
+            //
         ];
     }
 }
