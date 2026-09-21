@@ -18,14 +18,13 @@ class LoanResource extends JsonResource
         return [
             'id'           => $this->id,
             'status'       => $this->status,
-            'is_overdue'   => $this->isOverdue(),
+            'is_overdue' => $this->isOverdue(),
             'borrowed_at'  => $this->borrowed_at?->toIso8601String(),
             'due_at'       => $this->due_at?->toIso8601String(),
             'returned_at'  => $this->returned_at?->toIso8601String(),
 
             'book' => BookResource::make($this->whenLoaded('book')),
             'member' => MemberResource::make($this->whenLoaded('member')),
-            'is_overdue' => $this->isOverdue(),
         ];
     }
 }
