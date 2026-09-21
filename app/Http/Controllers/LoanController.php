@@ -9,6 +9,7 @@ use App\Http\Requests\StoreLoanRequest;
 use App\Http\Resources\LoanResource;
 use App\Models\Loan;
 use App\Services\LoanService;
+use Illuminate\Http\Request;
 
 class LoanController extends Controller
 {
@@ -16,7 +17,11 @@ class LoanController extends Controller
 
     public function index(IndexLoanRequest $request)
     {
-        $loans = Loan::with(['book', 'member'])->latest()->paginate(25);
+        $loans = Loan::with(['book', 'member'])
+            ->when($request->boolean('overdue'), fn ($q) => $q->overdue())
+            ->latest()
+            ->paginate(25);
+
         return LoanResource::collection($loans);
     }
 
@@ -38,5 +43,16 @@ class LoanController extends Controller
     public function returnBook(ReturnLoanRequest $request, Loan $loan)
     {
         return new LoanResource($this->loans->returnBook($loan));
+    }
+
+    public function mine(Request $request)
+    {
+        $loans = $request->user()
+            ->loans()
+            ->with('book')
+            ->latest()
+            ->paginate(25);
+
+        return LoanResource::collection($loans);
     }
 }

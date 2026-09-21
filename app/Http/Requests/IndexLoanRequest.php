@@ -23,7 +23,7 @@ class IndexLoanRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'overdue' => ['sometimes', 'in:true,false,1,0'],
         ];
     }
 }

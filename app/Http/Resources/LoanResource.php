@@ -25,6 +25,7 @@ class LoanResource extends JsonResource
 
             'book' => BookResource::make($this->whenLoaded('book')),
             'member' => MemberResource::make($this->whenLoaded('member')),
+            'is_overdue' => $this->isOverdue(),
         ];
     }
 }

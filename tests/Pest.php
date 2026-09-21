@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Illuminate\Support\Facades\DB;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,6 +29,12 @@ expect()->extend('toBeOne', function () {
 | Functions
 |--------------------------------------------------------------------------
 */
+
+beforeEach(function () {
+    if (! str_ends_with(DB::connection()->getDatabaseName(), '_test')) {
+        throw new RuntimeException('Refusing to run tests on a non-test database.');
+    }
+});
 
 function something()
 {

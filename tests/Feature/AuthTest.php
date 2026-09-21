@@ -2,6 +2,7 @@
 // tests/Feature/AuthTest.php
 
 use App\Models\User;
+use Laravel\Sanctum\Sanctum;
 
 // FR-5
 it('registers a new member and returns a token', function () {
@@ -68,4 +69,25 @@ it('rejects requests with an invalid token', function () {
     $this->withHeader('Authorization', 'Bearer token-ngasal')
         ->getJson('/api/loans')
         ->assertStatus(401);
+});
+
+it('ignores role when registering', function () {
+    $this->postJson('/api/register', [
+        'name' => 'Sneaky',
+        'email' => 'sneaky@test.com',
+        'password' => 'password123',
+        'password_confirmation' => 'password123',
+        'role' => 'admin',
+    ])->assertSuccessful();
+
+    expect(User::where('email', 'sneaky@test.com')->first()->role)->toBe('member');
+});
+
+it('does not let a member promote themselves', function () {
+    $member = User::factory()->create(['role' => 'member']);
+    Sanctum::actingAs($member);
+
+    $this->putJson("/api/users/{$member->id}", ['role' => 'admin']);
+
+    expect($member->fresh()->role)->toBe('member');
 });

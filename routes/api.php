@@ -37,6 +37,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/loans/{loan}/return', [LoanController::class, 'returnBook'])
         ->middleware('throttle:write');
+    
+    Route::get('/loans/me', [LoanController::class, 'mine']);
+    Route::get('/loans/{loan}', [LoanController::class, 'show'])->whereNumber('loan');
 });
 
 Route::get('/user', function (Request $request) {
