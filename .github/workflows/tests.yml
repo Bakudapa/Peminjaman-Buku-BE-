@@ -1,0 +1,40 @@
+name: tests
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  pest:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: DBPinjamBuku_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: secret
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      APP_ENV: testing
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: DBPinjamBuku_test
+      DB_USERNAME: postgres
+      DB_PASSWORD: secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_pgsql
+          coverage: none
+      - run: cp .env.example .env
+      - run: composer install --no-interaction --prefer-dist
+      - run: php artisan key:generate
+      - run: php artisan migrate --force
+      - run: ./vendor/bin/pest --compact
