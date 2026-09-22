@@ -1,0 +1,28 @@
+# ---- Stage 1: Composer dependencies ----
+FROM composer:2 AS vendor
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
+
+COPY . .
+RUN composer dump-autoload --optimize --no-dev
+
+# ---- Stage 2: Runtime ----
+FROM php:8.5-fpm-alpine
+
+RUN apk add --no-cache postgresql-dev libzip-dev zip unzip nginx supervisor gettext \
+    && docker-php-ext-install pdo pdo_pgsql zip bcmath
+
+WORKDIR /var/www/html
+COPY --from=vendor /app /var/www/html
+
+COPY docker/render/default.conf.template /etc/nginx/http.d/default.conf.template
+COPY docker/render/supervisord.conf /etc/supervisord.conf
+COPY docker/render/start.sh /start.sh
+RUN chmod +x /start.sh
+
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+EXPOSE 8080
+CMD ["/start.sh"]
