@@ -45,7 +45,7 @@ Project ini bukan aplikasi komersial — tujuannya adalah portofolio yang mendem
 - Aplikasi frontend/mobile (fokus murni backend API)
 - Load balancer multi-instance (dicatat sebagai future work, lihat §12)
 
-## 5. Functional Requirements
+## 5. Functional RequirementsV
 
 ### 5.1 Manajemen Buku (Admin)
 
