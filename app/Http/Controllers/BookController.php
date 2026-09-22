@@ -17,10 +17,10 @@ class BookController extends Controller
         $category = $request->query('category');
         $keyword  = $request->query('keyword');
         $page     = $request->query('page', 1);
-        $version  = Cache::get('books:cache:version', 1);
 
-        // Hanya cache saat filter sederhana (kategori saja, tanpa keyword),
-        // karena itu pola akses paling sering (browsing per kategori)
+        Cache::add('books:cache:version', 1); // pastikan key benar-benar tersimpan
+        $version = Cache::get('books:cache:version');
+
         if ($category && !$keyword) {
             $key = "books:v{$version}:category:{$category}:page:{$page}";
 
