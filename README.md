@@ -14,6 +14,8 @@ Fokus: konsistensi stok di bawah akses bersamaan (concurrent), otorisasi berlapi
 - Batas pinjaman aktif per anggota dan status overdue
 - Otorisasi per role lewat FormRequest (admin, pemilik data)
 - Rate limiting per endpoint, exception khusus dengan log terstruktur
+- Query database diindeks dan dibuktikan lewat `EXPLAIN ANALYZE`
+- Caching daftar buku per kategori dengan invalidasi otomatis
 
 ## Menjalankan project
 ```bash
@@ -45,6 +47,34 @@ Test FR-10 menjalankan beberapa proses sungguhan yang meminjam buku dengan stok 
 Saya memverifikasi test ini benar-benar mendeteksi race condition dengan menghapus
 `lockForUpdate()`: test gagal tanpa lock, lolos dengan lock.
 
+## Performance: Index
+
+Diuji dengan data sintetis: ~98.000 buku, ~5.000 anggota, 200.000 loan.
+
+| Query | Sebelum (Seq Scan) | Sesudah | Execution Time (Sebelum → Sesudah) | Speedup |
+|---|---|---|---|---|
+| Cari buku per kategori | Seq Scan, buang 78.509 baris | Bitmap Index Scan (`books_category_index`) | 11.75 ms → 4.79 ms | ~2.4x |
+| Loan aktif per anggota | Seq Scan, buang 200.000 baris | Index Scan (`loans_member_id_status_index`) | 16.27 ms → 0.031 ms | ~525x |
+| Cek overdue | Seq Scan, buang 141.444 baris | Bitmap Index Scan (`loans_status_due_at_index`) | 22.13 ms → 11.11 ms | ~2x |
+
+Index yang ditambahkan: `books(category)`, `loans(book_id)`, `loans(member_id, status)`, `loans(status, due_at)`.
+
+Speedup query loan aktif per anggota jauh lebih besar karena hasilnya kosong/sedikit,
+sehingga index cukup menjawab tanpa membuka tabel sama sekali. Dua query lain tetap
+harus membuka banyak blok tabel untuk mengambil data, jadi speedup-nya lebih kecil
+meski tetap signifikan.
+
+## Performance: Cache
+
+`GET /api/books?category=...` di-cache 60 detik per kategori. Cache di-invalidate
+otomatis (lewat version key) saat: admin menambah/mengubah/menghapus buku, atau saat
+ada peminjaman/pengembalian yang mengubah `available_copies`.
+
+Dibuktikan lewat test (`tests/Feature/BookCacheTest.php`):
+- Request kedua ke kategori yang sama menghasilkan jumlah query DB lebih sedikit dari request pertama
+- Cache otomatis basi (tidak dipakai lagi) setelah buku baru ditambahkan
+- Cache otomatis basi setelah stok berubah akibat peminjaman
+
 ## Endpoint utama
 | Method | Endpoint | Akses |
 |---|---|---|
@@ -54,3 +84,5 @@ Saya memverifikasi test ini benar-benar mendeteksi race condition dengan menghap
 | POST | /api/loans | anggota |
 | POST | /api/loans/{id}/return | pemilik loan |
 | GET | /api/loans/me | anggota |
+
+Dokumentasi API lengkap untuk konsumsi frontend: lihat [`docs/API.md`](docs/API.md).

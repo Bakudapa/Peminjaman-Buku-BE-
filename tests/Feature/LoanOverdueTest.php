@@ -61,8 +61,7 @@ it('lets an admin filter overdue loans over HTTP', function () {
 
     $response = $this->getJson('/api/loans?overdue=true');
 
-    $response->dumpHeaders();
-    dump(substr($response->getContent(), 0, 600));
+
 
     $response->assertOk()
         ->assertJsonCount(1, 'data')
