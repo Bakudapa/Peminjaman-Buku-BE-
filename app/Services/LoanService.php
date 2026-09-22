@@ -9,6 +9,7 @@ use App\Models\Book;
 use App\Models\Loan;
 use App\Models\User;
 use App\Enums\LoanStatus;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class LoanService
@@ -22,7 +23,7 @@ class LoanService
      */
     public function borrowBook(User $member, int $bookId): Loan
     {
-        return DB::transaction(function () use ($member, $bookId) {
+        $loan = DB::transaction(function () use ($member, $bookId) {
             $book = $this->lockBook($bookId);
 
             $this->ensureUserUnderLimit($member);
@@ -32,6 +33,11 @@ class LoanService
 
             return $this->createLoan($member, $book);
         });
+
+        // available_copies berubah → cache daftar buku jadi basi
+        Cache::increment('books:cache:version');
+
+        return $loan;
     }
 
     /**
@@ -40,7 +46,7 @@ class LoanService
      */
     public function returnBook(Loan $loan): Loan
     {
-        return DB::transaction(function () use ($loan) {
+        $loan = DB::transaction(function () use ($loan) {
             $loan = $this->lockLoan($loan->id);
 
             $this->ensureLoanNotYetReturned($loan);
@@ -50,6 +56,11 @@ class LoanService
 
             return $loan->fresh();
         });
+
+        // available_copies berubah → cache daftar buku jadi basi
+        Cache::increment('books:cache:version');
+
+        return $loan;
     }
 
     // ---------------------------------------------------------------
